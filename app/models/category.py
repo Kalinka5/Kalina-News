@@ -6,10 +6,13 @@ from app.db.base_class import Base
 
 
 class Category(Base):
+    __tablename__ = "categories"
+    
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=True)
     
-    # Relationships
-    articles = relationship("Article", secondary="article_category", back_populates="categories") 
+    # Relationships for future use
+    # articles = relationship("Article", back_populates="category") 

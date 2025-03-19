@@ -7,26 +7,26 @@ from app.schemas.user import User
 
 # Shared properties
 class CommentBase(BaseModel):
-    content: Optional[str] = None
+    text: Optional[str] = None
 
 
 # Properties to receive via API on creation
 class CommentCreate(CommentBase):
-    content: str
+    text: str
     article_id: int
 
 
 # Properties shared by models in DB
 class CommentInDBBase(CommentBase):
     id: int
-    content: str
+    text: str
     article_id: int
     user_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Properties to return via API

@@ -14,29 +14,31 @@ from app.schemas.token import Token
 router = APIRouter()
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token, description="Use your **email** in the username field to log in")
 def login_access_token(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests.
     
+    **Important**: Enter your email address in the username field.
+    
     Args:
         db: Database session
-        form_data: Form containing username and password
+        form_data: Form containing username (email) and password
         
     Returns:
         Token: Access token and token type
         
     Raises:
-        HTTPException: If the username or password is incorrect
+        HTTPException: If the email or password is incorrect
     """
-    # Find the user by username
-    user = db.query(User).filter(User.username == form_data.username).first()
+    # Find the user by email (OAuth2 form uses username field for the login identifier)
+    user = db.query(User).filter(User.email == form_data.username).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
@@ -44,7 +46,7 @@ def login_access_token(
     if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

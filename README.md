@@ -1,121 +1,121 @@
-# Kalina News API
+# Kalina News
 
-A news platform for delivering articles to readers, allowing user interaction through comments, and providing content management capabilities for authors, editors, and administrators.
+A modern news platform built with FastAPI and SQLite.
 
 ## Features
 
-- **Articles**: CRUD operations for news articles, including titles, content, authors, publication dates, categories, and tags.
-- **User Management**: Registration, authentication, and role-based access for users (authors, editors, admins).
-- **Categories and Tags**: Organization of articles into categories and tags for better discoverability.
-- **Comments**: Authenticated users can comment on articles.
-- **Search**: Keyword-based search for articles.
-- **Admin Panel**: Restricted endpoints for managing content and users.
+- User authentication with JWT
+- News article management
+- Categories and tags
+- Comments system
+- API documentation with Swagger UI
 
-## Tech Stack
-
-- **Backend**: FastAPI (Python)
-- **Database**: PostgreSQL
-- **ORM**: SQLAlchemy
-- **Authentication**: JWT (JSON Web Tokens)
-- **Caching**: Redis (optional)
-
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Python 3.8+
-- PostgreSQL
+- SQLite (included in Python standard library)
 - Redis (optional, for caching)
 
-### Installation
+## Installation
 
-1. Clone the repository:
+### 1. Quick setup (recommended)
 
-   ```bash
-   git clone https://github.com/yourusername/kalina-news.git
-   cd kalina-news
-   ```
+```bash
+python setup.py
+```
 
-2. Create a virtual environment and activate it:
+This will guide you through the setup process, including installing dependencies and creating a `.env` file.
 
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+### 2. Manual setup
 
-3. Install dependencies:
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/kalina-news.git
+cd kalina-news
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Install dependencies
+pip install -r requirements.txt
 
-4. Create a `.env` file based on `.env.example`:
+# Create a .env file
+cp .env.example .env
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+## Database Setup
 
-   Then edit the `.env` file with your configuration.
+### 1. SQLite Setup
 
-5. Initialize the database:
+SQLite is a file-based database that comes included with Python, so there's no separate database server to install or configure.
 
-   ```bash
-   alembic upgrade head
-   ```
+The default database file is `kalina_news.db` in the project root directory. You can change this by editing the `SQLITE_PATH` in your `.env` file:
 
-6. Run the development server:
+```
+SQLITE_PATH=kalina_news.db
+SQLALCHEMY_DATABASE_URI=sqlite:///kalina_news.db
+```
 
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+Make sure the path is writable by your application.
 
-7. Access the API documentation at http://localhost:8000/docs
+### 2. Application Database Setup
 
-## API Endpoints
+You can set up the application database using one of the following methods:
 
-### Authentication
+```bash
+# Option 1: Setup with migrations (recommended)
+make db-setup
 
-- `POST /api/v1/login`: Authenticate a user and return a JWT token.
+# Option 2: Direct setup without migrations
+make db-direct
+```
 
-### Users
+Or run the setup scripts directly:
 
-- `POST /api/v1/users`: Register a new user.
-- `GET /api/v1/users/me`: Get the current authenticated user's information.
-- `PUT /api/v1/users/me`: Update the current authenticated user's information.
-- `GET /api/v1/users`: Get a list of all users (admin only).
-- `GET /api/v1/users/{user_id}`: Get a user by ID (admin only).
+```bash
+# Using migrations (alembic)
+python db_setup.py
 
-### Articles
+# Direct setup (without alembic)
+python direct_db_setup.py
+```
 
-- `GET /api/v1/articles`: Retrieve a paginated list of articles.
-- `GET /api/v1/articles/{id}`: Retrieve a specific article by ID.
-- `POST /api/v1/articles`: Create a new article (authenticated; authors, editors, admins).
-- `PUT /api/v1/articles/{id}`: Update an article (authenticated; article author, editors, admins).
-- `DELETE /api/v1/articles/{id}`: Delete an article (authenticated; editors, admins).
+## Development
 
-### Categories
+```bash
+# Run the application
+make run
 
-- `GET /api/v1/categories`: Retrieve a list of all categories.
-- `POST /api/v1/categories`: Create a new category (authenticated; admins).
-- `PUT /api/v1/categories/{id}`: Update a category (authenticated; admins).
-- `DELETE /api/v1/categories/{id}`: Delete a category (authenticated; admins).
+# Create a new migration
+make revision
 
-### Tags
+# Apply migrations
+make migrate
 
-- `GET /api/v1/tags`: Retrieve a list of all tags.
-- `POST /api/v1/tags`: Create a new tag (authenticated; admins).
-- `PUT /api/v1/tags/{id}`: Update a tag (authenticated; admins).
-- `DELETE /api/v1/tags/{id}`: Delete a tag (authenticated; admins).
+# Run tests
+make test
 
-### Comments
+# View all available commands
+make help
+```
 
-- `GET /api/v1/articles/{article_id}/comments`: Retrieve comments for a specific article.
-- `POST /api/v1/articles/{article_id}/comments`: Add a comment to an article (authenticated).
-- `DELETE /api/v1/comments/{id}`: Delete a comment (authenticated; comment owner or admins).
+## Docker Setup
 
-### Search
+You can also run the application using Docker:
 
-- `GET /api/v1/search?q={query}`: Search articles by keyword in title, body, or author.
+```bash
+# Build and start the containers
+docker-compose up -d
+
+# Stop the containers
+docker-compose down
+```
+
+The SQLite database will be stored in a Docker volume for persistence.
+
+## API Documentation
+
+Once the application is running, you can access the API documentation at:
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
 ## License
 

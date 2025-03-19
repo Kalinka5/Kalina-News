@@ -6,10 +6,12 @@ from app.db.base_class import Base
 
 
 class Tag(Base):
+    __tablename__ = "tags"
+    
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=True)
     
-    # Relationships
-    articles = relationship("Article", secondary="article_tag", back_populates="tags") 
+    # Relationships for future use
+    # articles = relationship("Article", secondary="article_tags") 

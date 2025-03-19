@@ -10,6 +10,7 @@ from app.schemas.user import User
 # Shared properties
 class ArticleBase(BaseModel):
     title: Optional[str] = None
+    description: Optional[str] = None
     body: Optional[str] = None
     is_published: Optional[int] = 0
 
@@ -18,6 +19,7 @@ class ArticleBase(BaseModel):
 class ArticleCreate(ArticleBase):
     title: str
     body: str
+    description: Optional[str] = None
     category_ids: List[int] = []
     tag_ids: List[int] = []
 
@@ -33,14 +35,14 @@ class ArticleInDBBase(ArticleBase):
     id: int
     title: str
     body: str
-    author_id: int
+    owner_id: int
     is_published: int
     publication_date: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Properties to return via API

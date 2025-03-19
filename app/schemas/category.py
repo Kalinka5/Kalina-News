@@ -6,11 +6,13 @@ from pydantic import BaseModel
 # Shared properties
 class CategoryBase(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
 
 
 # Properties to receive via API on creation
 class CategoryCreate(CategoryBase):
     name: str
+    description: Optional[str] = None
 
 
 # Properties to receive via API on update
@@ -26,7 +28,7 @@ class CategoryInDBBase(CategoryBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Properties to return via API

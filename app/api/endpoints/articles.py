@@ -58,21 +58,34 @@ def create_article(
     current_user: User = Depends(get_current_active_author),
 ) -> Any:
     """
-    Create a new article. Only authors, editors, and admins can access this endpoint.
+    Create a new article.
     
-    Args:
-        db: Database session
-        article_in: Article data to create
-        current_user: Current authenticated active author user
-        
+    This endpoint allows authors, editors, and admins to create new articles.
+    
+    - **title**: Required. The title of the article.
+    - **description**: Optional. A brief description or summary of the article.
+    - **body**: Required. The main content of the article.
+    - **is_published**: Optional. Publication status (0=draft, 1=published). Defaults to 0 (draft).
+    - **category_ids**: Optional. List of category IDs to associate with the article.
+    - **tag_ids**: Optional. List of tag IDs to associate with the article.
+    
+    When an article is published (is_published=1), the publication_date is automatically set.
+    The created_at and updated_at fields are automatically set on creation.
+    
+    Permissions:
+      - Authors: Can create articles
+      - Editors: Can create articles
+      - Admins: Can create articles
+    
     Returns:
-        ArticleSchema: Created article
+      - The created article with author, categories and tags information
     """
     # Create the article
     db_article = Article(
         title=article_in.title,
+        description=article_in.description,
         body=article_in.body,
-        author_id=current_user.id,
+        owner_id=current_user.id,
         is_published=article_in.is_published,
     )
     
@@ -105,15 +118,19 @@ def read_article(
     """
     Get an article by ID.
     
-    Args:
-        db: Database session
-        article_id: Article ID
-        
+    This endpoint retrieves an article by its ID.
+    
+    - Published articles (is_published=1) are accessible to all users
+    - Unpublished articles (is_published=0) are only accessible to:
+      - The article author
+      - Editors
+      - Admins
+    
     Returns:
-        ArticleSchema: Article information
+      - The article with author, categories and tags information
         
     Raises:
-        HTTPException: If article not found or not published
+      - 404: If article not found or user not authorized to view unpublished article
     """
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
@@ -128,7 +145,7 @@ def read_article(
         try:
             current_user = get_current_active_user(db=db)
             # Check if user is author, editor, or admin
-            if (current_user.id != article.author_id and 
+            if (current_user.id != article.owner_id and 
                 current_user.role not in ["editor", "admin"]):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -152,19 +169,31 @@ def update_article(
     current_user: User = Depends(get_current_active_author),
 ) -> Any:
     """
-    Update an article. Only the article author, editors, and admins can access this endpoint.
+    Update an article.
     
-    Args:
-        db: Database session
-        article_id: Article ID
-        article_in: Article data to update
-        current_user: Current authenticated active author user
-        
+    This endpoint allows the article author, editors, and admins to update an existing article.
+    
+    - **title**: Optional. The title of the article.
+    - **description**: Optional. A brief description or summary of the article.
+    - **body**: Optional. The main content of the article.
+    - **is_published**: Optional. Publication status (0=draft, 1=published).
+    - **category_ids**: Optional. List of category IDs to associate with the article.
+    - **tag_ids**: Optional. List of tag IDs to associate with the article.
+    
+    When an article is published (is_published=1), the publication_date is automatically set if not already set.
+    The updated_at field is automatically updated.
+    
+    Permissions:
+      - Authors: Can update their own articles
+      - Editors: Can update any article
+      - Admins: Can update any article
+    
     Returns:
-        ArticleSchema: Updated article
-        
+      - The updated article with author, categories and tags information
+      
     Raises:
-        HTTPException: If article not found or user not authorized
+      - 404: If article not found
+      - 403: If user not authorized
     """
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
@@ -174,7 +203,7 @@ def update_article(
         )
     
     # Check if user is authorized to update the article
-    if (current_user.id != article.author_id and 
+    if (current_user.id != article.owner_id and 
         current_user.role not in ["editor", "admin"]):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -184,6 +213,8 @@ def update_article(
     # Update article fields
     if article_in.title is not None:
         article.title = article_in.title
+    if article_in.description is not None:
+        article.description = article_in.description
     if article_in.body is not None:
         article.body = article_in.body
     
@@ -217,18 +248,24 @@ def delete_article(
     current_user: User = Depends(get_current_active_editor),
 ) -> Any:
     """
-    Delete an article. Only editors and admins can access this endpoint.
+    Delete an article.
     
-    Args:
-        db: Database session
-        article_id: Article ID
-        current_user: Current authenticated active editor user
-        
+    This endpoint allows editors and admins to delete an article.
+    
+    The deletion is permanent and will also remove all associated data like:
+    - Category associations
+    - Tag associations
+    - Comments
+    
+    Permissions:
+      - Editors: Can delete any article
+      - Admins: Can delete any article
+    
     Returns:
-        ArticleSchema: Deleted article
+      - The deleted article with author, categories and tags information
         
     Raises:
-        HTTPException: If article not found
+      - 404: If article not found
     """
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:

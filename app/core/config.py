@@ -1,6 +1,7 @@
 import os
+import json
 from typing import Any, List, Optional, Union
-from pydantic import AnyHttpUrl, PostgresDsn, validator
+from pydantic import AnyHttpUrl, validator, field_validator
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -14,34 +15,45 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 1 week
     
     # CORS configuration
-    CORS_ORIGINS: List[AnyHttpUrl] = []
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     
     @validator("CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            # Try to parse as JSON
+            try:
+                if v.startswith("[") and v.endswith("]"):
+                    return json.loads(v)
+            except json.JSONDecodeError:
+                pass
+                
+            # Try to parse as comma-separated
+            if "," in v:
+                return [i.strip() for i in v.split(",") if i.strip()]
+            
+            # If it's a single URL
+            if v.strip():
+                return [v.strip()]
+                
+        # If it's already a list or empty
+        if isinstance(v, list):
             return v
-        raise ValueError(v)
+            
+        # Default fallback
+        return ["http://localhost:3000", "http://localhost:5173"]
     
     # Database configuration
-    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
-    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
-    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "kalina_news")
-    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
+    # SQLite configuration (replacing PostgreSQL)
+    SQLITE_PATH: str = os.getenv("SQLITE_PATH", "kalina_news.db")
+    SQLALCHEMY_DATABASE_URI: Optional[str] = os.getenv("SQLALCHEMY_DATABASE_URI")
     
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: dict) -> Any:
-        if isinstance(v, str):
+        if isinstance(v, str) and v:
             return v
-        return PostgresDsn.build(
-            scheme="postgresql",
-            user=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
-            path=f"/{values.get('POSTGRES_DB') or ''}",
-        )
+        # Use SQLite instead of PostgreSQL
+        sqlite_path = values.get("SQLITE_PATH", "kalina_news.db")
+        return f"sqlite:///{sqlite_path}"
     
     # Redis configuration (for caching)
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
@@ -50,6 +62,6 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env"
-
+        extra = "ignore"  # Ignore extra fields
 
 settings = Settings() 

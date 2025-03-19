@@ -35,13 +35,11 @@ def search_articles(
     # Search in published articles only
     articles = (
         db.query(Article)
-        .join(User, Article.author_id == User.id)
         .filter(
             Article.is_published == 1,
             or_(
                 Article.title.ilike(f"%{q}%"),
                 Article.body.ilike(f"%{q}%"),
-                User.username.ilike(f"%{q}%"),
             ),
         )
         .order_by(Article.publication_date.desc())

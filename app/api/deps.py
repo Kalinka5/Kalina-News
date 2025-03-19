@@ -11,7 +11,10 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.token import TokenPayload
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login",
+    description="**Important**: Use your email address as the username for authentication"
+)
 
 
 def get_current_user(
@@ -84,21 +87,14 @@ def get_current_active_author(
 ) -> User:
     """
     Get the current active user with author privileges.
+    Simplified: Any active user can author content.
     
     Args:
         current_user: Current authenticated active user
         
     Returns:
-        User: The current active user with author privileges
-        
-    Raises:
-        HTTPException: If the user does not have author privileges
+        User: The current active user
     """
-    if current_user.role not in ["author", "editor", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
     return current_user
 
 
@@ -107,6 +103,7 @@ def get_current_active_editor(
 ) -> User:
     """
     Get the current active user with editor privileges.
+    Now simplified to use superuser status.
     
     Args:
         current_user: Current authenticated active user
@@ -117,7 +114,7 @@ def get_current_active_editor(
     Raises:
         HTTPException: If the user does not have editor privileges
     """
-    if current_user.role not in ["editor", "admin"]:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -140,7 +137,7 @@ def get_current_active_admin(
     Raises:
         HTTPException: If the user does not have admin privileges
     """
-    if current_user.role != "admin":
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"

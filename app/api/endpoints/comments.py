@@ -89,7 +89,7 @@ def create_comment(
     # Check if article is published (only allow comments on published articles)
     if article.is_published != 1:
         # Allow authors, editors, and admins to comment on unpublished articles
-        if (current_user.id != article.author_id and 
+        if (current_user.id != article.owner_id and 
             current_user.role not in ["editor", "admin"]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -98,7 +98,7 @@ def create_comment(
     
     # Create the comment
     db_comment = Comment(
-        content=comment_in.content,
+        text=comment_in.text,
         article_id=article_id,
         user_id=current_user.id,
     )

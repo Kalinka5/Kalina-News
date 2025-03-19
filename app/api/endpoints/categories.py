@@ -61,7 +61,10 @@ def create_category(
         )
     
     # Create the category
-    db_category = Category(name=category_in.name)
+    db_category = Category(
+        name=category_in.name,
+        description=category_in.description
+    )
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
@@ -138,6 +141,9 @@ def update_category(
     # Update the category
     if category_in.name:
         category.name = category_in.name
+    
+    if category_in.description is not None:
+        category.description = category_in.description
     
     db.add(category)
     db.commit()

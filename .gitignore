@@ -22,6 +22,7 @@ var/
 
 # Virtual Environment
 venv/
+.venv/
 ENV/
 .env
 
@@ -48,7 +49,7 @@ alembic/versions/*.py
 !alembic/versions/__init__.py
 
 # Docker
-.dockerignore 
+.dockerignore
 
 # Cursor
 .cursor
