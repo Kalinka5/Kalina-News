@@ -13,7 +13,6 @@ class CommentBase(BaseModel):
 # Properties to receive via API on creation
 class CommentCreate(CommentBase):
     text: str
-    article_id: int
 
 
 # Properties shared by models in DB

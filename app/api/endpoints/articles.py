@@ -204,7 +204,7 @@ def update_article(
     
     # Check if user is authorized to update the article
     if (current_user.id != article.owner_id and 
-        current_user.role not in ["editor", "admin"]):
+        current_user.is_superuser == False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"

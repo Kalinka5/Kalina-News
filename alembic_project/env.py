@@ -30,12 +30,37 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-# Import environment variables for database connection
-from app.core.config import settings
+# Get database URL from environment if available
+def get_url():
+    # Use environment variable if defined
+    database_url = os.getenv("SQLALCHEMY_DATABASE_URI")
+    if database_url:
+        return database_url
+        
+    # Otherwise use SQLite
+    sqlite_path = os.getenv("SQLITE_PATH", "kalina_news.db")
+    return f"sqlite:///{sqlite_path}"
 
-# Override sqlalchemy.url with environment variable
-config.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
+# Override sqlalchemy.url with environment variable if it exists
+db_url = get_url()
+config.set_main_option("sqlalchemy.url", db_url)
 
+# Configure SQLite to use the correct migration approach
+def process_revision_directives(context, revision, directives):
+    # SQLite doesn't support ALTER TABLE for column changes
+    if directives and config.get_main_option("sqlalchemy.url").startswith("sqlite"):
+        from alembic.operations import ops
+        
+        # Handle both single directive and list of directives
+        directive_list = directives if isinstance(directives, list) else [directives]
+        
+        for directive in directive_list:
+            # Check if the directive has an 'ops' attribute (like UpgradeOps objects)
+            if hasattr(directive, 'ops'):
+                for operation in directive.ops:
+                    # Skip unsupported ALTER operations in SQLite
+                    if isinstance(operation, ops.AlterColumnOp):
+                        operation.kw['existing_nullable'] = True
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -55,6 +80,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        process_revision_directives=process_revision_directives
     )
 
     with context.begin_transaction():
@@ -76,7 +102,9 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, 
+            target_metadata=target_metadata,
+            process_revision_directives=process_revision_directives
         )
 
         with context.begin_transaction():

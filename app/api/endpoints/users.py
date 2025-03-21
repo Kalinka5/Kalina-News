@@ -33,7 +33,7 @@ def create_user(
         UserSchema: Created user
         
     Raises:
-        HTTPException: If email already exists
+        HTTPException: If email or username already exists
     """
     # Check if email already exists
     user = db.query(User).filter(User.email == user_in.email).first()
@@ -43,13 +43,22 @@ def create_user(
             detail="Email already registered"
         )
     
+    # Check if username already exists
+    user = db.query(User).filter(User.username == user_in.username).first()
+    if user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered"
+        )
+    
     # Create the user
     db_user = User(
+        username=user_in.username,
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
         is_active=True,
-        is_superuser=False,
+        is_superuser=user_in.is_superuser,
     )
     db.add(db_user)
     db.commit()

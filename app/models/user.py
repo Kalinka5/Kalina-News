@@ -9,6 +9,7 @@ class User(Base):
     __tablename__ = "users"  # Explicitly set the table name to match the database
     
     id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     full_name = Column(String, nullable=True)

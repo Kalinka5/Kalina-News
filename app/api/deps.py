@@ -13,7 +13,7 @@ from app.schemas.token import TokenPayload
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login",
-    description="**Important**: Use your email address as the username for authentication"
+    description="**Important**: Use your username or email address as the username for authentication"
 )
 
 
